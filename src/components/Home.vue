@@ -5,38 +5,50 @@
         </div>
         <div ref="scrollArea" :class=" history?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
-                <div v-for="item in history" :key="item.text">
-                    <v-card
-                        v-if="item.inputType == InputType.Reasoning"
-                        class = "mb-2 answer"
-                        color="indigo"
-                        variant="outlined"
-                    >
-                        <v-card-actions class="pa-0">
-                            <v-card-text> Show thinking process. </v-card-text>
-                            <v-btn
-                                class="mr-2"
-                                size="x-small"
-                                :icon="item.showReasoning ? 'fas fa-chevron-up fa-xs' : 'fas fa-chevron-down fa-xs'"
-                                @click="toggleShowReasoning(item)"
-                            ></v-btn>
-                        </v-card-actions>
-                        <v-expand-transition>
-                            <div v-show="item.showReasoning">
-                                <v-divider></v-divider>
-                                <FormattedOutput :text="item.text"/>
-                            </div>
-                        </v-expand-transition>
-                    </v-card>
-                    <v-card
-                        v-else
-                        class = "mb-2"
-                        color="indigo"
-                        :variant="item.inputType == InputType.Question ? 'tonal' : 'outlined'"
-                        :class="item.inputType == InputType.Question ? 'question' : 'answer'"
-                    >
-                        <FormattedOutput :text="item.text"/>
-                    </v-card>
+                <div v-for="item in history" :key="item.question">
+                    <v-row justify="end">
+                        <v-col cols="8">
+                            <v-card
+                                class = "mb-2 question"
+                                color="indigo"
+                                variant="tonal"
+                            >
+                                <FormattedOutput :text="item.question"/>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                    <v-row class="answers-row" no-gutters>
+                        <v-col v-for="r in item.responses" :key="r.answer">
+                            <v-card
+                                class = "mb-2 answer"
+                                color="indigo"
+                                variant="outlined"
+                            >
+                                <v-card-actions class="pa-0">
+                                    <v-card-text> Show thinking process. </v-card-text>
+                                    <v-btn
+                                        class="mr-2"
+                                        size="x-small"
+                                        :icon="r.showReasoning ? 'fas fa-chevron-up fa-xs' : 'fas fa-chevron-down fa-xs'"
+                                        @click="toggleShowReasoning(item.question, r.reasoning)"
+                                    ></v-btn>
+                                </v-card-actions>
+                                <v-expand-transition>
+                                    <div v-show="r.showReasoning">
+                                        <v-divider></v-divider>
+                                        <FormattedOutput :text="r.reasoning"/>
+                                    </div>
+                                </v-expand-transition>
+                            </v-card>
+                            <v-card
+                                class = "mb-2 answer"
+                                color="indigo"
+                                variant="outlined"
+                            >
+                                <FormattedOutput :text="r.answer"/>
+                            </v-card>
+                        </v-col>
+                    </v-row>
                 </div>
             </div>
         </div>
@@ -68,10 +80,10 @@
 import Greeting from './Greeting.vue'
 import FormattedOutput from './FormattedOutput.vue';
 import { ref, watch, nextTick, onMounted } from 'vue'
-import { type HistoryItem, InputType } from "../model/model"
+import { type AIResponse, type Conversation } from "../model/model"
 
 let question = ref("");
-const history = ref<[HistoryItem]>();
+const history = ref<[Conversation]>();
 let isThinking = ref(false);
 const AIEnabled = true;
 const generateCode = true;
@@ -155,7 +167,7 @@ async function sendMessage() {
     question.value = '';
 }
 
-async function toggleShowReasoning(item : HistoryItem) {
+async function toggleShowReasoning(question: string, reasoning: string) {
     let response;
 
     response = await fetch("http://localhost:5000/toggleShowReasoning", {
@@ -163,7 +175,7 @@ async function toggleShowReasoning(item : HistoryItem) {
         headers: {
         "Content-Type": "application/json"
         },
-        body: JSON.stringify(item.text)
+        body: JSON.stringify({question, reasoning})
     })
 
     if (response.status === 200)
@@ -177,7 +189,7 @@ async function toggleShowReasoning(item : HistoryItem) {
 
 <style>
 html { 
-    overflow-y: hidden 
+    overflow-y: hidden;
 }
 
 .question {
@@ -186,10 +198,15 @@ html {
 
 .answer {
     text-align: left;
+    width: 100%;
 }
 
 .content {
-  max-width: 800px;
+  max-width: 90%;
+}
+
+.answers-row {
+  gap: 8px;
 }
 
 </style>

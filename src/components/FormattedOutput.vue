@@ -20,4 +20,9 @@ const formattedText = computed(() =>
 ul, ol {
   padding-left: 1rem !important;
 }
+
+.answer pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 </style>
