@@ -74,6 +74,7 @@ let question = ref("");
 const history = ref<[HistoryItem]>();
 let isThinking = ref(false);
 const AIEnabled = true;
+const generateCode = true;
 const scrollArea = ref<HTMLElement | null>(null);
 
 watch(() => history.value?.length, async () => {
@@ -122,10 +123,11 @@ async function sendMessage() {
         let aResponse;
         if (AIEnabled) {
             aResponse = await fetch("http://localhost:5000/respond", {
-                method: "GET",
+                method: "POST",
                 headers: {
                 "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify({generateCode: generateCode})
             })
         } else {
             await new Promise(f => setTimeout(f, 1500));
