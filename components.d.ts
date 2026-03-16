@@ -11,10 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    copy: typeof import('./src/components/Home copy.vue')['default']
+    FormattedOutput: typeof import('./src/components/FormattedOutput.vue')['default']
     Greeting: typeof import('./src/components/Greeting.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     Home: typeof import('./src/components/Home.vue')['default']
-    Home_copy: typeof import('./src/components/Home_copy.vue')['default']
   }
 }

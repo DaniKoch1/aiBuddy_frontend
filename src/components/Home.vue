@@ -18,13 +18,13 @@
                                 class="mr-2"
                                 size="x-small"
                                 :icon="item.showReasoning ? 'fas fa-chevron-up fa-xs' : 'fas fa-chevron-down fa-xs'"
-                                @click="item.showReasoning = !item.showReasoning"
+                                @click="toggleShowReasoning(item)"
                             ></v-btn>
                         </v-card-actions>
                         <v-expand-transition>
                             <div v-show="item.showReasoning">
                                 <v-divider></v-divider>
-                                <v-card-text> {{ item.text }} </v-card-text>
+                                <FormattedOutput :text="item.text"/>
                             </div>
                         </v-expand-transition>
                     </v-card>
@@ -34,8 +34,9 @@
                         color="indigo"
                         :variant="item.inputType == InputType.Question ? 'tonal' : 'outlined'"
                         :class="item.inputType == InputType.Question ? 'question' : 'answer'"
-                        :text = item.text
-                    ></v-card>
+                    >
+                        <FormattedOutput :text="item.text"/>
+                    </v-card>
                 </div>
             </div>
         </div>
@@ -47,35 +48,35 @@
                     variant="outlined"
                     auto-grow
                     rows="1"
+                    hide-details="auto"
                     max-rows="6"
                     :append-inner-icon="isThinking ? 'fas fa-lightbulb fa-fade' : 'fas fa-arrow-up'"
                     :disabled="isThinking"
                     v-model="question"
                     @click:append-inner="sendMessage"
+                    @keypress.enter.exact="sendMessage"
                 ></v-textarea>
+                <p class="text-right font-weight-light text-medium-emphasis" style="font-size: small">
+                    Press enter to send.
+                </p>
             </div>
         </div>
     </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
 import Greeting from './Greeting.vue'
-
-enum InputType {
-    Question = 0,
-    Answer,
-    Reasoning
-}
-type HistoryItem = {text: string, inputType: InputType, showReasoning: Boolean}
+import FormattedOutput from './FormattedOutput.vue';
+import { ref, watch, nextTick, onMounted } from 'vue'
+import { type HistoryItem, InputType } from "../model/model"
 
 let question = ref("");
-let history = ref<[HistoryItem]>();
+const history = ref<[HistoryItem]>();
 let isThinking = ref(false);
 const AIEnabled = true;
 const scrollArea = ref<HTMLElement | null>(null);
 
-watch(history, async () => {
+watch(() => history.value?.length, async () => {
   await nextTick()
 
   if (scrollArea.value) {
@@ -83,54 +84,91 @@ watch(history, async () => {
   }
 }, { deep: true })
 
+onMounted(async () => {
+    console.log(`the component is now mounted.`)
+    const response = await fetch("http://localhost:5000/history", {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json"
+        },
+    })
+    if (response.status === 200)
+    {
+        const message = await response.json();
+        console.log(message);
+        history.value = message.history;
+    }
+})
+
 async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
     isThinking.value = true;
 
-    const qInput: HistoryItem = {text: question.value, inputType: InputType.Question, showReasoning: false};
-    if (!history.value) {
-        history.value = [qInput];
+    const qResponse = await fetch("http://localhost:5000/ask", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify(question.value)
+    })
+
+    if (qResponse.status === 200)
+    {
+        const message = await qResponse.json();
+        history.value = message.history;
+
+        let aResponse;
+        if (AIEnabled) {
+            aResponse = await fetch("http://localhost:5000/respond", {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json"
+                }
+            })
+        } else {
+            await new Promise(f => setTimeout(f, 1500));
+            aResponse = await fetch("http://localhost:5000/noAI", {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json"
+                }
+            })
+        }
+
+        if (aResponse.status === 200) {
+            const message = await aResponse.json();
+            console.log(message);
+            history.value = message.history;
+        } else {
+            alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
+        }
     } else {
-        history.value.push(qInput);
+        alert('The backend reported an error. Error code: ' + qResponse.status + ' ' + qResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
     }
 
-    let response, answer, reasoning;
-    if (AIEnabled) {
-        response = await fetch("http://localhost:5000/talk", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify(question.value)
-        })
-    } else {
-        
-        await new Promise(f => setTimeout(f, 1500));
-        response = await fetch("http://localhost:5000/answer", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify(question.value)
-        })
-    }
+    
+    isThinking.value = false;
+    question.value = '';
+}
+
+async function toggleShowReasoning(item : HistoryItem) {
+    let response;
+
+    response = await fetch("http://localhost:5000/toggleShowReasoning", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify(item.text)
+    })
+
     if (response.status === 200)
     {
         const message = await response.json();
-        console.log(message);
-        answer = message.answer;
-        reasoning = message.reasoning;
+        history.value = message.history;
     }
-
-    const rInput: HistoryItem = {text: reasoning, inputType: InputType.Reasoning, showReasoning: false};
-    history.value.push(rInput);
-    const aInput: HistoryItem = {text: answer, inputType: InputType.Answer, showReasoning: false};
-    history.value.push(aInput);
-
-    isThinking.value = false;
-    question.value = '';
 }
 
 </script>
