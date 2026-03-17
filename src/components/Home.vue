@@ -55,6 +55,7 @@
         <div :class=" history?.length ? 'pt-4' : 'my-auto'">
             <div class="content mx-auto">
                 <Greeting v-if="!history?.length"/>
+
                 <v-textarea
                     label="Ask away"
                     variant="outlined"
@@ -68,9 +69,27 @@
                     @click:append-inner="sendMessage"
                     @keypress.enter.exact="sendMessage"
                 ></v-textarea>
-                <p class="text-right font-weight-light text-medium-emphasis" style="font-size: small">
-                    Press enter to send.
-                </p>
+                <v-row>
+                    <v-col cols="6" class="ma-0 pa-0" >
+                        <v-switch 
+                            label="Generate Code" 
+                            density="compact"
+                            style="transform: scale(0.9);"
+                            class="pt-2" 
+                            hide-details="auto"
+                            color="#6b7ad5"
+                            v-model="generateCode"
+                        >
+                        </v-switch>
+                    </v-col>
+                    <v-col cols="6">
+                        <p class="text-right font-weight-light text-medium-emphasis" style="font-size: small">
+                            Press enter to send.
+                        </p>
+                    </v-col>
+                    
+                </v-row>
+                
             </div>
         </div>
     </v-container>
@@ -83,10 +102,10 @@ import { ref, watch, nextTick, onMounted } from 'vue'
 import { type AIResponse, type Conversation } from "../model/model"
 
 let question = ref("");
-const history = ref<[Conversation]>();
 let isThinking = ref(false);
+let generateCode = ref(false);
+const history = ref<[Conversation]>();
 const AIEnabled = true;
-const generateCode = true;
 const scrollArea = ref<HTMLElement | null>(null);
 
 watch(() => history.value?.length, async () => {
@@ -139,7 +158,7 @@ async function sendMessage() {
                 headers: {
                 "Content-Type": "application/json"
                 },
-                body: JSON.stringify({generateCode: generateCode})
+                body: JSON.stringify({generateCode: generateCode.value})
             })
         } else {
             await new Promise(f => setTimeout(f, 1500));
