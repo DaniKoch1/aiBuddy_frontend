@@ -1,7 +1,18 @@
 <template>
     <v-container class="d-flex flex-column" style="height: 100vh">
-        <div class="pb-4">
+        <div class="pb-4 d-flex" :class="{'justify-space-between': history?.length, 'justify-end': !history?.length}">
             <Greeting v-if="history?.length"/>
+            <v-btn 
+                prepend-icon="fa-solid fa-ranking-star" 
+                stacked 
+                variant="text"
+                density="comfortable"
+                size="small"
+            >
+            <RouterLink to="/codereviews">
+                Reviews
+            </RouterLink>
+            </v-btn>
         </div>
         <div ref="scrollArea" :class=" history?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
@@ -87,7 +98,6 @@
                             Press enter to send.
                         </p>
                     </v-col>
-                    
                 </v-row>
                 
             </div>
