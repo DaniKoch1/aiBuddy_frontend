@@ -7,7 +7,7 @@
                 rows="1"
                 hide-details="auto"
                 max-rows="6"
-                :append-inner-icon="loading ? 'fas fa-lightbulb fa-fade' : 'fas fa-arrow-up'"
+                :append-inner-icon="loading ? 'fa-solid fa-spinner fa-spin-pulse' : 'fas fa-arrow-up'"
                 :disabled="loading"
                 v-model="modelValue"
                 @click:append-inner="$emit('send-question')"

@@ -2,7 +2,7 @@
     <v-container class="d-flex flex-column" style="height: 100vh">
         <div class="pb-4 d-flex justify-space-between">
             <Greeting :greeting="greeting" :icon="greetingIcon"/>
-            <CustomRouter :url="routerUrl" :icon="routerIcon" :text="routerText"/>
+            <CustomRouter v-if="codeReviewsEnabled" :url="routerUrl" :icon="routerIcon" :text="routerText"/>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
@@ -43,9 +43,10 @@ let question = ref("");
 let isThinking = ref(false);
 let generateCode = ref(false);
 const chatHistory = ref<[Conversation]>();
-const AIEnabled = true;
 const scrollArea = ref<HTMLElement | null>(null);
 
+const AIEnabled = true;
+const codeReviewsEnabled = false;
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
 const routerIcon = "fa-solid fa-ranking-star";
