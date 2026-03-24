@@ -1,124 +1,59 @@
 <template>
     <v-container class="d-flex flex-column" style="height: 100vh">
-        <div class="pb-4 d-flex" :class="{'justify-space-between': history?.length, 'justify-end': !history?.length}">
-            <Greeting v-if="history?.length"/>
-            <v-btn 
-                prepend-icon="fa-solid fa-ranking-star" 
-                stacked 
-                variant="text"
-                density="comfortable"
-                size="small"
-            >
-            <RouterLink to="/codereviews">
-                Reviews
-            </RouterLink>
-            </v-btn>
+        <div class="pb-4 d-flex justify-space-between">
+            <Greeting :greeting="greeting" :icon="greetingIcon"/>
+            <CustomRouter :url="routerUrl" :icon="routerIcon" :text="routerText"/>
         </div>
-        <div ref="scrollArea" :class=" history?.length ? 'flex-grow-1 overflow-y-auto' : ''">
+        <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
-                <div v-for="item in history" :key="item.question">
-                    <v-row justify="end">
-                        <v-col cols="8">
-                            <v-card
-                                class = "mb-2 question"
-                                color="indigo"
-                                variant="tonal"
-                            >
-                                <FormattedOutput :text="item.question"/>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-                    <v-row class="answers-row" no-gutters>
-                        <v-col v-for="r in item.responses" :key="r.answer">
-                            <v-card
-                                class = "mb-2 answer"
-                                color="indigo"
-                                variant="outlined"
-                            >
-                                <v-card-actions class="pa-0">
-                                    <v-card-text> Show thinking process. </v-card-text>
-                                    <v-btn
-                                        class="mr-2"
-                                        size="x-small"
-                                        :icon="r.showReasoning ? 'fas fa-chevron-up fa-xs' : 'fas fa-chevron-down fa-xs'"
-                                        @click="toggleShowReasoning(item.question, r.reasoning)"
-                                    ></v-btn>
-                                </v-card-actions>
-                                <v-expand-transition>
-                                    <div v-show="r.showReasoning">
-                                        <v-divider></v-divider>
-                                        <FormattedOutput :text="r.reasoning"/>
-                                    </div>
-                                </v-expand-transition>
-                            </v-card>
-                            <v-card
-                                class = "mb-2 answer"
-                                color="indigo"
-                                variant="outlined"
-                            >
-                                <FormattedOutput :text="r.answer"/>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                <div v-for="item in chatHistory" :key="item.question">
+                    <QuestionRow :question="item.question"/>
+                    <AnswersRows 
+                        :responses="item.responses"
+                        @toggleShowReasoning="toggleShowReasoning"
+                    />
                 </div>
             </div>
         </div>
-        <div :class=" history?.length ? 'pt-4' : 'my-auto'">
-            <div class="content mx-auto">
-                <Greeting v-if="!history?.length"/>
-
-                <v-textarea
-                    label="Ask away"
-                    variant="outlined"
-                    auto-grow
-                    rows="1"
-                    hide-details="auto"
-                    max-rows="6"
-                    :append-inner-icon="isThinking ? 'fas fa-lightbulb fa-fade' : 'fas fa-arrow-up'"
-                    :disabled="isThinking"
-                    v-model="question"
-                    @click:append-inner="sendMessage"
-                    @keypress.enter.exact="sendMessage"
-                ></v-textarea>
-                <v-row>
-                    <v-col cols="6" class="ma-0 pa-0" >
-                        <v-switch 
-                            label="Generate Code" 
-                            density="compact"
-                            style="transform: scale(0.9);"
-                            class="pt-2" 
-                            hide-details="auto"
-                            color="#6b7ad5"
-                            v-model="generateCode"
-                        >
-                        </v-switch>
-                    </v-col>
-                    <v-col cols="6">
-                        <p class="text-right font-weight-light text-medium-emphasis" style="font-size: small">
-                            Press enter to send.
-                        </p>
-                    </v-col>
-                </v-row>
-                
-            </div>
+        <div :class="chatHistory?.length ? 'pt-4' : 'my-auto'">
+            <QuestionInput
+                v-model="question"
+                v-model:switchValue="generateCode"
+                :loading="isThinking"
+                :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
+                @send-question="sendMessage"
+                label="Ask away"
+                switchLabel="Generate Code"
+                :color="color"
+            />
         </div>
     </v-container>
 </template>
 
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
-import FormattedOutput from './FormattedOutput.vue';
 import { ref, watch, nextTick, onMounted } from 'vue'
-import { type AIResponse, type Conversation } from "../model/model"
+import { type Conversation } from "../model/model"
+import CustomRouter from './CustomRouter.vue';
+import QuestionRow from './QuestionRow.vue';
+import QuestionInput from './QuestionInput.vue';
+import AnswersRows from './AnswersRows.vue';
 
 let question = ref("");
 let isThinking = ref(false);
 let generateCode = ref(false);
-const history = ref<[Conversation]>();
+const chatHistory = ref<[Conversation]>();
 const AIEnabled = true;
 const scrollArea = ref<HTMLElement | null>(null);
 
-watch(() => history.value?.length, async () => {
+const greeting : string = "Hi, I'm your artificial coding buddy!";
+const greetingIcon : string = "fa-solid fa-user-astronaut";
+const routerIcon = "fa-solid fa-ranking-star";
+const routerUrl : string = "/codereviews";
+const routerText : string = "Reviews";
+const color : string = "#6b7ad5";
+
+watch(() => chatHistory.value?.length, async () => {
   await nextTick()
 
   if (scrollArea.value) {
@@ -128,7 +63,7 @@ watch(() => history.value?.length, async () => {
 
 onMounted(async () => {
     console.log(`the component is now mounted.`)
-    const response = await fetch("http://localhost:5000/history", {
+    const response = await fetch("http://localhost:5000/chatHistory", {
         method: "GET",
         headers: {
         "Content-Type": "application/json"
@@ -138,7 +73,7 @@ onMounted(async () => {
     {
         const message = await response.json();
         console.log(message);
-        history.value = message.history;
+        chatHistory.value = message.chatHistory;
     }
 })
 
@@ -159,7 +94,7 @@ async function sendMessage() {
     if (qResponse.status === 200)
     {
         const message = await qResponse.json();
-        history.value = message.history;
+        chatHistory.value = message.chatHistory;
 
         let aResponse;
         if (AIEnabled) {
@@ -183,7 +118,7 @@ async function sendMessage() {
         if (aResponse.status === 200) {
             const message = await aResponse.json();
             console.log(message);
-            history.value = message.history;
+            chatHistory.value = message.chatHistory;
         } else {
             alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
         }
@@ -196,46 +131,24 @@ async function sendMessage() {
     question.value = '';
 }
 
-async function toggleShowReasoning(question: string, reasoning: string) {
+async function toggleShowReasoning(reasoning: string) {
     let response;
 
-    response = await fetch("http://localhost:5000/toggleShowReasoning", {
+    response = await fetch("http://localhost:5000/toggleShowChatReasoning", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
         },
-        body: JSON.stringify({question, reasoning})
+        body: JSON.stringify({reasoning})
     })
 
     if (response.status === 200)
     {
         const message = await response.json();
-        history.value = message.history;
+        chatHistory.value = message.chatHistory;
     }
 }
 
 </script>
 
-<style>
-html { 
-    overflow-y: hidden;
-}
-
-.question {
-    text-align: right;
-}
-
-.answer {
-    text-align: left;
-    width: 100%;
-}
-
-.content {
-  max-width: 90%;
-}
-
-.answers-row {
-  gap: 8px;
-}
-
-</style>
+<style src="../style/style.css"/>
