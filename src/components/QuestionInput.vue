@@ -11,7 +11,7 @@
                 :disabled="loading"
                 v-model="modelValue"
                 @click:append-inner="$emit('send-question')"
-                @keypress.enter.exact="$emit('send-question')"
+                @keypress.enter.exact.prevent="$emit('send-question')"
             ></v-textarea>
             <v-row>
                 <v-col cols="6" class="ma-0 pa-0" >

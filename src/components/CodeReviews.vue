@@ -7,7 +7,7 @@
         <div ref="scrollArea" :class=" reviewHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
                 <div v-for="item in reviewHistory" :key="item.question">
-                    <QuestionRow :question="item.question"/>
+                    <!-- <QuestionRow :question="item.question"/> -->
                     <AnswersRows 
                         :responses="item.responses"
                         @toggleShowReasoning="toggleShowReasoning"
@@ -35,7 +35,7 @@ import Greeting from './Greeting.vue'
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { type Conversation } from "../model/model"
 import CustomRouter from './CustomRouter.vue';
-import QuestionRow from './QuestionRow.vue';
+import QuestionRow from './ConversationItemCard.vue';
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
 
@@ -95,16 +95,13 @@ async function sendMessage() {
         const message = await qResponse.json();
         reviewHistory.value = message.reviewHistory;
 
-        let aResponse;
-        // if (AIEnabled) {
-            aResponse = await fetch("http://localhost:5000/codeReview", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json"
-                },
-                body: JSON.stringify({code: question.value})
-            })
-        // }
+        const aResponse = await fetch("http://localhost:5000/codeReview", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({code: question.value})
+        })
 
         if (aResponse.status === 200) {
             const message = await aResponse.json();

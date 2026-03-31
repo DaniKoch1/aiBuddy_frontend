@@ -1,17 +1,82 @@
 <template>
     <v-container class="d-flex flex-column" style="height: 100vh">
         <div class="pb-4 d-flex justify-space-between">
-            <Greeting :greeting="greeting" :icon="greetingIcon"/>
+            <Greeting :greeting="greeting" :icon="greetingIcon"/> 
+            <FollowUpDialogue_new :followUp="currentFollowUp" v-model:showDialog="showDialog" @updateFollowUp="submitFollowUpAnswer"/>
             <CustomRouter v-if="codeReviewsEnabled" :url="routerUrl" :icon="routerIcon" :text="routerText"/>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
                 <div v-for="item in chatHistory" :key="item.question">
-                    <QuestionRow :question="item.question"/>
+                    <OneRow 
+                        :text="item.question" 
+                        :formatAsQuestion="true"
+                    />
+                    <OneRow 
+                        v-if="item.followUp && item.followUp.lowQuestion"
+                        :text="item.followUp.lowQuestion" 
+                        :formatAsQuestion="false" 
+                    />
+                    <OneRow 
+                        v-if="item.followUp && item.followUp.lowAnswer"
+                        :text="item.followUp.lowAnswer" 
+                        :formatAsQuestion="true" >
+                        <!-- <template v-if="!item.followUp.lowAnswer" #customisation>
+                            <EditButton @showDialog="showDialog = $event" />
+                        </template> -->
+                    </OneRow>
+                    <v-row 
+                        v-if="item.followUp && item.followUp.lowQuestion && !item.followUp.lowAnswer"
+                        justify="end" 
+                        no-gutters >
+                        <v-col>
+                            <div class="mb-2 d-flex float-right">
+                                <v-btn @click="showDialog = true" color="indigo" variant="tonal">
+                                    Answer
+                                </v-btn>
+                            </div>
+                        </v-col>
+                    </v-row>
+                    <OneRow 
+                        v-if="item.followUp && item.followUp.highQuestion"
+                        :text="item.followUp.highQuestion" 
+                        :formatAsQuestion="false" 
+                    />
+                    <OneRow 
+                        v-if="item.followUp && item.followUp.highAnswer"
+                        :text="item.followUp.highAnswer" 
+                        :formatAsQuestion="true" >
+                        <!-- <template v-if="!item.followUp.highAnswer" #customisation>
+                            <EditButton @showDialog="showDialog = $event" />
+                        </template> -->
+                    </OneRow>
+                    <v-row 
+                        v-if="item.followUp && item.followUp.highQuestion && !item.followUp.highAnswer"
+                        justify="end" 
+                        no-gutters >
+                        <v-col>
+                            <div class="mb-2 d-flex float-right">
+                                <v-btn @click="showDialog = true" color="indigo" variant="tonal">
+                                    Answer
+                                </v-btn>
+                            </div>
+                        </v-col>
+                    </v-row>
+                    <OneRow 
+                        v-if="item.followUp && item.followUp.feedback"
+                        :text="item.followUp.feedback" 
+                        :formatAsQuestion="false" 
+                    />
                     <AnswersRows 
+                        v-if="item.followUp && item.followUp.feedback"
                         :responses="item.responses"
                         @toggleShowReasoning="toggleShowReasoning"
                     />
+                    <!-- <OneRow 
+                        v-else-if="item.responses"
+                        text="Answer these 2 questions to reveal my response." 
+                        :formatAsQuestion="false"
+                    /> -->
                 </div>
             </div>
         </div>
@@ -32,20 +97,20 @@
 
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
-import { ref, watch, nextTick, onMounted } from 'vue'
-import { type Conversation } from "../model/model"
+import { ref, watch, nextTick, onMounted, computed, type ComputedRef } from 'vue'
+import { type Conversation, type FollowUp } from "../model/model"
 import CustomRouter from './CustomRouter.vue';
-import QuestionRow from './QuestionRow.vue';
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
+import OneRow from './OneRow.vue';
+import FollowUpDialogue_new from './FollowUpDialogue.vue';
 
 let question = ref("");
-let isThinking = ref(false);
 let generateCode = ref(false);
+let showDialog = ref(false);
 const chatHistory = ref<[Conversation]>();
 const scrollArea = ref<HTMLElement | null>(null);
 
-const AIEnabled = true;
 const codeReviewsEnabled = false;
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
@@ -53,6 +118,25 @@ const routerIcon = "fa-solid fa-ranking-star";
 const routerUrl : string = "/codereviews";
 const routerText : string = "Reviews";
 const color : string = "#6b7ad5";
+
+const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
+    if (chatHistory.value && chatHistory.value.length > 0)
+        return chatHistory.value[chatHistory.value.length-1]?.followUp ?? {};
+
+    return {};
+});
+
+const isThinking: ComputedRef<boolean> = computed(() => {
+     if (chatHistory.value && chatHistory.value.length > 0) {
+        const currentConv = chatHistory.value[chatHistory.value.length-1];
+        if (!currentConv)
+            return false;
+        return currentConv.question != '' && (currentConv.responses.length == 0 || !currentConv.followUp?.feedback);
+     }
+
+    return false;
+});
+
 
 watch(() => chatHistory.value?.length, async () => {
   await nextTick()
@@ -63,7 +147,6 @@ watch(() => chatHistory.value?.length, async () => {
 }, { deep: true })
 
 onMounted(async () => {
-    console.log(`the component is now mounted.`)
     const response = await fetch("http://localhost:5000/chatHistory", {
         method: "GET",
         headers: {
@@ -82,8 +165,6 @@ async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
-    isThinking.value = true;
-
     const qResponse = await fetch("http://localhost:5000/ask", {
         method: "POST",
         headers: {
@@ -97,24 +178,15 @@ async function sendMessage() {
         const message = await qResponse.json();
         chatHistory.value = message.chatHistory;
 
-        let aResponse;
-        if (AIEnabled) {
-            aResponse = await fetch("http://localhost:5000/respond", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json"
-                },
-                body: JSON.stringify({generateCode: generateCode.value})
-            })
-        } else {
-            await new Promise(f => setTimeout(f, 1500));
-            aResponse = await fetch("http://localhost:5000/noAI", {
-                method: "GET",
-                headers: {
-                "Content-Type": "application/json"
-                }
-            })
-        }
+        submitFollowUpAnswer({});
+
+        const aResponse = await fetch("http://localhost:5000/respond", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({generateCode: generateCode.value})
+        })
 
         if (aResponse.status === 200) {
             const message = await aResponse.json();
@@ -126,16 +198,29 @@ async function sendMessage() {
     } else {
         alert('The backend reported an error. Error code: ' + qResponse.status + ' ' + qResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
     }
-
     
-    isThinking.value = false;
     question.value = '';
 }
 
-async function toggleShowReasoning(reasoning: string) {
-    let response;
+async function submitFollowUpAnswer(followUp: FollowUp) {
+    const response = await fetch("http://localhost:5000/converseSocratically", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify({followUp: followUp})
+    })
 
-    response = await fetch("http://localhost:5000/toggleShowChatReasoning", {
+    if (response.status === 200)
+    {
+        const message = await response.json();
+        chatHistory.value = message.chatHistory;
+        console.log(chatHistory.value);
+    }
+}
+
+async function toggleShowReasoning(reasoning: string) {
+    const response = await fetch("http://localhost:5000/toggleShowChatReasoning", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
