@@ -2,8 +2,10 @@
     <v-container class="d-flex flex-column" style="height: 100vh">
         <div class="pb-4 d-flex justify-space-between">
             <Greeting :greeting="greeting" :icon="greetingIcon"/> 
-            <FollowUpDialogue_new :followUp="currentFollowUp" v-model:showDialog="showDialog" @updateFollowUp="submitFollowUpAnswer"/>
+            <FollowUpDialogue :followUp="currentFollowUp" v-model:showDialog="showFollowUpDialog" @updateFollowUp="submitFollowUpAnswer"/>
+            <AboutDialogue v-model:showDialog="showAboutDialog" />
             <CustomRouter v-if="codeReviewsEnabled" :url="routerUrl" :icon="routerIcon" :text="routerText"/>
+            <v-btn variant="outlined" color="indigo" @click="showAboutDialog = true">About</v-btn>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
@@ -31,7 +33,7 @@
                         no-gutters >
                         <v-col>
                             <div class="mb-2 d-flex float-right">
-                                <v-btn @click="showDialog = true" color="indigo" variant="tonal">
+                                <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
                                     Answer
                                 </v-btn>
                             </div>
@@ -56,7 +58,7 @@
                         no-gutters >
                         <v-col>
                             <div class="mb-2 d-flex float-right">
-                                <v-btn @click="showDialog = true" color="indigo" variant="tonal">
+                                <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
                                     Answer
                                 </v-btn>
                             </div>
@@ -103,11 +105,13 @@ import CustomRouter from './CustomRouter.vue';
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
 import OneRow from './OneRow.vue';
-import FollowUpDialogue_new from './FollowUpDialogue.vue';
+import FollowUpDialogue from './FollowUpDialogue.vue';
+import AboutDialogue from './AboutDialogue.vue';
 
 let question = ref("");
 let generateCode = ref(false);
-let showDialog = ref(false);
+let showFollowUpDialog = ref(false);
+let showAboutDialog = ref(false);
 const chatHistory = ref<[Conversation]>();
 const scrollArea = ref<HTMLElement | null>(null);
 

@@ -26,7 +26,7 @@
                     </v-expand-transition>
                 </template>
             </OneRow>
-            <OneRow :text="r.answer" :formatAsQuestion="false"/>
+            <OneRow :text="'**Answer:** \n\n' + r.answer" :formatAsQuestion="false"/>
         </v-col>
     </v-row>
 </template>
