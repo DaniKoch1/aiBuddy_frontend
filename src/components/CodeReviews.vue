@@ -62,7 +62,7 @@ watch(() => reviewHistory.value?.length, async () => {
 
 onMounted(async () => {
     console.log(`the review component is now mounted.`)
-    const response = await fetch("http://localhost:5000/reviewHistory", {
+    const response = await fetch("/reviewHistory", {
         method: "GET",
         headers: {
         "Content-Type": "application/json"
@@ -82,7 +82,7 @@ async function sendMessage() {
 
     isThinking.value = true;
 
-    const qResponse = await fetch("http://localhost:5000/askCodeReview", {
+    const qResponse = await fetch("/askCodeReview", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
@@ -95,7 +95,7 @@ async function sendMessage() {
         const message = await qResponse.json();
         reviewHistory.value = message.reviewHistory;
 
-        const aResponse = await fetch("http://localhost:5000/codeReview", {
+        const aResponse = await fetch("/codeReview", {
             method: "POST",
             headers: {
             "Content-Type": "application/json"
@@ -122,7 +122,7 @@ async function sendMessage() {
 async function toggleShowReasoning(reasoning: string) {
     let response;
 
-    response = await fetch("http://localhost:5000/toggleShowReviewReasoning", {
+    response = await fetch("/toggleShowReviewReasoning", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"

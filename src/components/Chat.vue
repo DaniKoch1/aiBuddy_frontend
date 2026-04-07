@@ -151,7 +151,7 @@ watch(() => chatHistory.value?.length, async () => {
 }, { deep: true })
 
 onMounted(async () => {
-    const response = await fetch("http://localhost:5000/chatHistory", {
+    const response = await fetch("/chatHistory", {
         method: "GET",
         headers: {
         "Content-Type": "application/json"
@@ -169,7 +169,7 @@ async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
-    const qResponse = await fetch("http://localhost:5000/ask", {
+    const qResponse = await fetch("/ask", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
@@ -184,7 +184,7 @@ async function sendMessage() {
 
         submitFollowUpAnswer({});
 
-        const aResponse = await fetch("http://localhost:5000/respond", {
+        const aResponse = await fetch("/respond", {
             method: "POST",
             headers: {
             "Content-Type": "application/json"
@@ -207,7 +207,7 @@ async function sendMessage() {
 }
 
 async function submitFollowUpAnswer(followUp: FollowUp) {
-    const response = await fetch("http://localhost:5000/converseSocratically", {
+    const response = await fetch("/converseSocratically", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
@@ -224,7 +224,7 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
 }
 
 async function toggleShowReasoning(reasoning: string) {
-    const response = await fetch("http://localhost:5000/toggleShowChatReasoning", {
+    const response = await fetch("/toggleShowChatReasoning", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
