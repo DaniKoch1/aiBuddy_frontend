@@ -15,12 +15,15 @@
             ></v-btn>
         </v-card-title>
         <v-card-text>
-            This prototype is an educational GenAI application supporting learning to code. It aims to foster critical thinking, while still providing ready to use information. <br/>
-            Main features:
+            This prototype aims to help you to learn coding by answering your questions, while engaging you in critical evaluation of them. <br/>
+            It does so by:
             <ul>
-                <li>Thinking process providing transparency over how the AI reached its answer.</li>
-                <li>Follow up questions encouraging users to ideate alongside with the AI.</li>
-                <li>Multiple code responses of varying quality encouraging evaluation of the AI generated code.</li>
+                <li>Thinking process - it allows you to understand how the AI reached its answer. Make sure to read it if you are curious about the background of the answer or 
+                    suspect a mistake in it.</li>
+                <li>Follow up questions - they help you to think independently about the answer by asking you guiding questions. 
+                    This is crucial for your engagement with the topic.</li>
+                <li>Multiple code responses - they help you to familiarize yourself with different code and to evaluate it.
+                    The code has varying quality, so be sure to either choose the correct one or to correct the one you chose!</li>
                 <li>Code reviews – tbd.</li>
             </ul>
         </v-card-text>
