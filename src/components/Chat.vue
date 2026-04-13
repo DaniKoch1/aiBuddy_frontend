@@ -4,7 +4,6 @@
             <Greeting :greeting="greeting" :icon="greetingIcon"/> 
             <FollowUpDialogue :followUp="currentFollowUp" v-model:showDialog="showFollowUpDialog" @updateFollowUp="submitFollowUpAnswer"/>
             <AboutDialogue v-model:showDialog="showAboutDialog" />
-            <CustomRouter v-if="codeReviewsEnabled" :url="routerUrl" :icon="routerIcon" :text="routerText"/>
             <v-btn variant="outlined" color="indigo" @click="showAboutDialog = true">About</v-btn>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
@@ -23,9 +22,6 @@
                         v-if="item.followUp && item.followUp.lowAnswer"
                         :text="item.followUp.lowAnswer" 
                         :formatAsQuestion="true" >
-                        <!-- <template v-if="!item.followUp.lowAnswer" #customisation>
-                            <EditButton @showDialog="showDialog = $event" />
-                        </template> -->
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.lowQuestion && !item.followUp.lowAnswer"
@@ -34,7 +30,7 @@
                         <v-col>
                             <div class="mb-2 d-flex float-right">
                                 <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
-                                    Answer
+                                    Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
@@ -48,9 +44,6 @@
                         v-if="item.followUp && item.followUp.highAnswer"
                         :text="item.followUp.highAnswer" 
                         :formatAsQuestion="true" >
-                        <!-- <template v-if="!item.followUp.highAnswer" #customisation>
-                            <EditButton @showDialog="showDialog = $event" />
-                        </template> -->
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.highQuestion && !item.followUp.highAnswer"
@@ -59,7 +52,7 @@
                         <v-col>
                             <div class="mb-2 d-flex float-right">
                                 <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
-                                    Answer
+                                    Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
@@ -74,23 +67,17 @@
                         :responses="item.responses"
                         @toggleShowReasoning="toggleShowReasoning"
                     />
-                    <!-- <OneRow 
-                        v-else-if="item.responses"
-                        text="Answer these 2 questions to reveal my response." 
-                        :formatAsQuestion="false"
-                    /> -->
                 </div>
             </div>
         </div>
         <div :class="chatHistory?.length ? 'pt-4' : 'my-auto'">
             <QuestionInput
                 v-model="question"
-                v-model:switchValue="generateCode"
+                v-model:activeMode="activeMode"
                 :loading="isThinking"
                 :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
                 @send-question="sendMessage"
                 label="Ask away"
-                switchLabel="Generate Code"
                 :color="color"
             />
         </div>
@@ -100,8 +87,7 @@
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
 import { ref, watch, nextTick, onMounted, computed, type ComputedRef } from 'vue'
-import { type Conversation, type FollowUp } from "../model/model"
-import CustomRouter from './CustomRouter.vue';
+import { ChatMode, type Conversation, type FollowUp } from "../model/model"
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
 import OneRow from './OneRow.vue';
@@ -109,18 +95,14 @@ import FollowUpDialogue from './FollowUpDialogue.vue';
 import AboutDialogue from './AboutDialogue.vue';
 
 let question = ref("");
-let generateCode = ref(false);
+let activeMode = ref(ChatMode.Understand);
 let showFollowUpDialog = ref(false);
 let showAboutDialog = ref(false);
 const chatHistory = ref<[Conversation]>();
 const scrollArea = ref<HTMLElement | null>(null);
 
-const codeReviewsEnabled = false;
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
-const routerIcon = "fa-solid fa-ranking-star";
-const routerUrl : string = "/codereviews";
-const routerText : string = "Reviews";
 const color : string = "#6b7ad5";
 
 const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
@@ -189,7 +171,7 @@ async function sendMessage() {
             headers: {
             "Content-Type": "application/json"
             },
-            body: JSON.stringify({generateCode: generateCode.value})
+            body: JSON.stringify({chatMode: activeMode.value})
         })
 
         if (aResponse.status === 200) {
@@ -220,6 +202,9 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
         const message = await response.json();
         chatHistory.value = message.chatHistory;
         console.log(chatHistory.value);
+        if (!chatHistory.value![chatHistory.value!.length -1]?.followUp.highAnswer) {
+            showFollowUpDialog.value = true;
+        }
     }
 }
 
