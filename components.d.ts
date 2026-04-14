@@ -12,21 +12,16 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AboutDialogue: typeof import('./src/components/AboutDialogue.vue')['default']
-    AnswerButton: typeof import('./src/components/AnswerButton.vue')['default']
     AnswersRows: typeof import('./src/components/AnswersRows.vue')['default']
     Chat: typeof import('./src/components/Chat.vue')['default']
-    CodeReviews: typeof import('./src/components/CodeReviews.vue')['default']
     ConversationItemCard: typeof import('./src/components/ConversationItemCard.vue')['default']
     CustomRouter: typeof import('./src/components/CustomRouter.vue')['default']
     EditButton: typeof import('./src/components/EditButton.vue')['default']
-    FollowUpDialog: typeof import('./src/components/FollowUpDialog.vue')['default']
     FollowUpDialogue: typeof import('./src/components/FollowUpDialogue.vue')['default']
-    FollowUpDialogue_new: typeof import('./src/components/FollowUpDialogue_new.vue')['default']
     FormattedOutput: typeof import('./src/components/FormattedOutput.vue')['default']
     Greeting: typeof import('./src/components/Greeting.vue')['default']
     OneRow: typeof import('./src/components/OneRow.vue')['default']
     QuestionInput: typeof import('./src/components/QuestionInput.vue')['default']
-    QuestionRow: typeof import('./src/components/QuestionRow.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

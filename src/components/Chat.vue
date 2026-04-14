@@ -65,7 +65,7 @@
                     <AnswersRows 
                         v-if="item.followUp && item.followUp.feedback"
                         :responses="item.responses"
-                        @toggleShowReasoning="toggleShowReasoning"
+                        @toggleShowReasoning="callToggleShowReasoning"
                     />
                 </div>
             </div>
@@ -86,31 +86,24 @@
 
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
-import { ref, watch, nextTick, onMounted, computed, type ComputedRef } from 'vue'
+import { ref, watch, nextTick, computed, type ComputedRef } from 'vue'
 import { ChatMode, type Conversation, type FollowUp } from "../model/model"
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
 import OneRow from './OneRow.vue';
 import FollowUpDialogue from './FollowUpDialogue.vue';
 import AboutDialogue from './AboutDialogue.vue';
+import { addChatToHistory, addFollowUp, getChatContext, getChatHistory, getCurrentFollowUp, toggleShowReasoning } from '@/model/chatManager';
 
 let question = ref("");
 let activeMode = ref(ChatMode.Understand);
 let showFollowUpDialog = ref(false);
 let showAboutDialog = ref(false);
-const chatHistory = ref<[Conversation]>();
 const scrollArea = ref<HTMLElement | null>(null);
 
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
 const color : string = "#6b7ad5";
-
-const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
-    if (chatHistory.value && chatHistory.value.length > 0)
-        return chatHistory.value[chatHistory.value.length-1]?.followUp ?? {};
-
-    return {};
-});
 
 const isThinking: ComputedRef<boolean> = computed(() => {
      if (chatHistory.value && chatHistory.value.length > 0) {
@@ -123,6 +116,13 @@ const isThinking: ComputedRef<boolean> = computed(() => {
     return false;
 });
 
+const chatHistory: ComputedRef<Conversation[]> = computed(() => {
+    return getChatHistory();
+})
+
+const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
+    return getCurrentFollowUp();
+});
 
 watch(() => chatHistory.value?.length, async () => {
   await nextTick()
@@ -132,57 +132,30 @@ watch(() => chatHistory.value?.length, async () => {
   }
 }, { deep: true })
 
-onMounted(async () => {
-    const response = await fetch("http://localhost:5000/chatHistory", {
-        method: "GET",
-        headers: {
-        "Content-Type": "application/json"
-        },
-    })
-    if (response.status === 200)
-    {
-        const message = await response.json();
-        console.log(message);
-        chatHistory.value = message.chatHistory;
-    }
-})
-
 async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
-    const qResponse = await fetch("http://localhost:5000/ask", {
+    const qInput: Conversation = {question: question.value, responses: []};
+    addChatToHistory(qInput);
+
+    submitFollowUpAnswer({});
+    const context  = activeMode.value == ChatMode.CodeReview ? getChatHistory()[getChatHistory().length - 1]!.question : getChatContext();
+    const aResponse = await fetch("http://localhost:5000/respond", {
         method: "POST",
         headers: {
         "Content-Type": "application/json"
         },
-        body: JSON.stringify(question.value)
+        body: JSON.stringify({chatMode: activeMode.value, chatContext: context})
     })
-
-    if (qResponse.status === 200)
-    {
-        const message = await qResponse.json();
-        chatHistory.value = message.chatHistory;
-
-        submitFollowUpAnswer({});
-
-        const aResponse = await fetch("http://localhost:5000/respond", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify({chatMode: activeMode.value})
-        })
-
-        if (aResponse.status === 200) {
-            const message = await aResponse.json();
-            console.log(message);
-            chatHistory.value = message.chatHistory;
-        } else {
-            alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
-        }
+    if (aResponse.status === 200) {
+        const message = await aResponse.json();
+        console.log(message);
+        const currentConv : Conversation = getChatHistory().pop()!;
+        currentConv!.responses = message.responses;
+        addChatToHistory(currentConv);
     } else {
-        alert('The backend reported an error. Error code: ' + qResponse.status + ' ' + qResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
+        alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
     }
     
     question.value = '';
@@ -194,34 +167,23 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
         headers: {
         "Content-Type": "application/json"
         },
-        body: JSON.stringify({followUp: followUp})
+        body: JSON.stringify({followUp: followUp, chatContext: getChatContext()})
     })
 
     if (response.status === 200)
     {
         const message = await response.json();
-        chatHistory.value = message.chatHistory;
-        console.log(chatHistory.value);
-        if (!chatHistory.value![chatHistory.value!.length -1]?.followUp.highAnswer) {
+        const newFollowUp = message.followUp;
+        addFollowUp(newFollowUp);
+
+        if (!getChatHistory()![getChatHistory()!.length -1]?.followUp!.highAnswer) {
             showFollowUpDialog.value = true;
         }
     }
 }
 
-async function toggleShowReasoning(reasoning: string) {
-    const response = await fetch("http://localhost:5000/toggleShowChatReasoning", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify({reasoning})
-    })
-
-    if (response.status === 200)
-    {
-        const message = await response.json();
-        chatHistory.value = message.chatHistory;
-    }
+async function callToggleShowReasoning(reasoning: string) {
+    toggleShowReasoning(reasoning);
 }
 
 </script>

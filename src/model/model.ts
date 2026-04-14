@@ -1,6 +1,6 @@
 export type Conversation = {
     question: string;
-    followUp: FollowUp;
+    followUp?: FollowUp;
     responses: AIResponse[];
 }
 
