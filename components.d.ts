@@ -24,5 +24,6 @@ declare module 'vue' {
     QuestionInput: typeof import('./src/components/QuestionInput.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SelectCodeButton: typeof import('./src/components/SelectCodeButton.vue')['default']
   }
 }

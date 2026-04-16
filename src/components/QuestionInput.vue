@@ -8,7 +8,7 @@
                 hide-details="auto"
                 max-rows="6"
                 :append-inner-icon="loading ? 'fa-solid fa-spinner fa-spin-pulse' : 'fas fa-arrow-up'"
-                :disabled="loading"
+                :disabled="loading || disabled"
                 v-model="modelValue"
                 @click:append-inner="$emit('send-question')"
                 @keypress.enter.exact.prevent="$emit('send-question')"
@@ -45,6 +45,7 @@ const props = defineProps<{
   modelValue: string;
   activeMode: ChatMode;
   loading: boolean;
+  disabled: boolean;
   label: string;
   color: string;
 }>();
@@ -52,6 +53,9 @@ const props = defineProps<{
 const modes : string[] = [ChatMode.Understand, ChatMode.Code, ChatMode.CodeReview];
 
 const label = computed(() => {
+    if (props.disabled) {
+        return "Select the correct code snippet to enable"
+    }
     switch (activeMode.value) {
         case ChatMode.Understand:
             return "Ask away";

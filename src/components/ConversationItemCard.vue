@@ -4,12 +4,13 @@
         :class="formatAsQuestion ? 'question' : 'answer'"
         color="indigo"
         :variant="formatAsQuestion ? 'tonal' : 'outlined'"
+        density="compact"
     >
-        <FormattedOutput v-if="text" :text="text"/>
-
         <div v-if="$slots.customisation" class="customisation">
             <slot name="customisation" />
         </div>
+
+        <FormattedOutput v-if="text" :text="text"/>
     </v-card>
 </template>
 

@@ -63,8 +63,9 @@
                         :formatAsQuestion="false" 
                     />
                     <AnswersRows 
-                        v-if="item.followUp && item.followUp.feedback"
+                        v-if="item.followUp && item.followUp.feedback && item.responses.length > 0"
                         :responses="item.responses"
+                        :mode="item.mode"
                         @toggleShowReasoning="callToggleShowReasoning"
                     />
                 </div>
@@ -75,6 +76,7 @@
                 v-model="question"
                 v-model:activeMode="activeMode"
                 :loading="isThinking"
+                :disabled="!answerSelected"
                 :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
                 @send-question="sendMessage"
                 label="Ask away"
@@ -86,7 +88,7 @@
 
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
-import { ref, watch, nextTick, computed, type ComputedRef } from 'vue'
+import { ref, watch, nextTick, computed, type ComputedRef, onMounted } from 'vue'
 import { ChatMode, type Conversation, type FollowUp } from "../model/model"
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
@@ -94,12 +96,15 @@ import OneRow from './OneRow.vue';
 import FollowUpDialogue from './FollowUpDialogue.vue';
 import AboutDialogue from './AboutDialogue.vue';
 import { addChatToHistory, addFollowUp, getChatContext, getChatHistory, getCurrentFollowUp, toggleShowReasoning } from '@/model/chatManager';
+import { codeAnswersStore } from '@/store/store';
 
 let question = ref("");
 let activeMode = ref(ChatMode.Understand);
 let showFollowUpDialog = ref(false);
 let showAboutDialog = ref(false);
+const answerSelected = ref(true);
 const scrollArea = ref<HTMLElement | null>(null);
+const store = codeAnswersStore();
 
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
@@ -130,30 +135,63 @@ watch(() => chatHistory.value?.length, async () => {
   if (scrollArea.value) {
     scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
   }
-}, { deep: true })
+}, { deep: true });
+
+watch(() => store.answerSelected, (newVal) => {
+    answerSelected.value = newVal;
+});
+
+onMounted(() => {
+    showAboutDialog.value = true;
+});
 
 async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
-    const qInput: Conversation = {question: question.value, responses: []};
+    const qInput: Conversation = {mode: activeMode.value, question: question.value, responses: []};
     addChatToHistory(qInput);
 
     submitFollowUpAnswer({});
-    const context  = activeMode.value == ChatMode.CodeReview ? getChatHistory()[getChatHistory().length - 1]!.question : getChatContext();
-    const aResponse = await fetch("http://localhost:5000/respond", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify({chatMode: activeMode.value, chatContext: context})
-    })
+
+    let aResponse;
+    switch (activeMode.value) {
+        case ChatMode.Understand:
+            aResponse = await fetch("http://localhost:5000/askUnderstand", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({chatContext: getChatContext()})
+            });
+            break;
+        case ChatMode.Code:
+            aResponse = await fetch("http://localhost:5000/askCode", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({chatContext: getChatContext()})
+            });
+            break;
+        case ChatMode.CodeReview:
+            aResponse = await fetch("http://localhost:5000/requestReview", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({code: question.value})
+            });
+            break;
+    }
+
     if (aResponse.status === 200) {
         const message = await aResponse.json();
-        console.log(message);
         const currentConv : Conversation = getChatHistory().pop()!;
         currentConv!.responses = message.responses;
         addChatToHistory(currentConv);
+        if (currentConv.mode == ChatMode.Code)
+            store.setAnswerSelected(false);
     } else {
         alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
     }
@@ -162,13 +200,29 @@ async function sendMessage() {
 }
 
 async function submitFollowUpAnswer(followUp: FollowUp) {
-    const response = await fetch("http://localhost:5000/converseSocratically", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify({followUp: followUp, chatContext: getChatContext()})
-    })
+    let response;
+    const currentConversation: Conversation = getChatHistory()[getChatHistory().length-1]!;
+
+    switch (currentConversation.mode) {
+        case ChatMode.CodeReview:
+            response = await fetch("http://localhost:5000/converseCodeReview", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({followUp: followUp, code: currentConversation.question})
+            });
+            break;
+        default:
+            response = await fetch("http://localhost:5000/converseSocratically", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({followUp: followUp, chatContext: getChatContext()})
+            });
+            break;
+    }
 
     if (response.status === 200)
     {

@@ -15,14 +15,20 @@
             ></v-btn>
         </v-card-title>
         <v-card-text>
-            This prototype is an educational GenAI application supporting learning to code. It aims to foster critical thinking, while still providing ready to use information. <br/>
+            This prototype helps you to learn coding by answering your questions, while engaging you in critical evaluation. <br/>
+            <b>Recommended flow:</b> ask about a concept in <i>Understand mode</i> -> ask for an implementation of it in <i>Code mode</i> -> 
+            use the code in your project and ask for a review of a function or a small class in <i>Code Review mode.</i>
+            <br/><br/>
             Main features:
             <ul>
-                <li>Thinking process providing transparency over how the AI reached its answer.</li>
-                <li>Follow up questions encouraging users to ideate alongside with the AI.</li>
-                <li>Multiple code responses of varying quality encouraging evaluation of the AI generated code.</li>
-                <li>Code reviews – tbd.</li>
+                <li><b>Thinking process</b> allows you to understand how the AI reached its answer. Reading it can help you understand the background or check for potential mistakes.</li>
+                <li><b>Follow up questions</b> guide you to think independently about the answer, which is essential for engaging deeply with the topic.</li>
+                <li><b>Multiple code responses</b> help you to familiarize yourself with different implementations and to evaluate them.
+                    The quality varies, so be sure to either choose the correct one or to correct the one you chose!</li>
+                <li><b>Code reviews</b> help you to reflect on your code and give you feedback, highlighting both strengths and areas for improvement.</li>
             </ul>
+            <br/>
+            <i>Attention, if you refresh the page, you will lose you conversation!</i>
         </v-card-text>
     </v-card>
     </v-dialog>

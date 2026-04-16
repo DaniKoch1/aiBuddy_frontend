@@ -13,11 +13,12 @@ import { router } from './router/router'
 
 // Composables
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
 // Styles
 import 'unfonts.css'
 
-const app = createApp(App).use(router)
+const app = createApp(App).use(router).use(createPinia())
 
 registerPlugins(app)
 
