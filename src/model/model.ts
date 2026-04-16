@@ -1,13 +1,15 @@
 export type Conversation = {
-    question: string;
-    followUp: FollowUp;
-    responses: AIResponse[];
+  mode: ChatMode;
+  question: string;
+  followUp?: FollowUp;
+  responses: AIResponse[];
 }
 
 export type AIResponse = {
   answer: string;
   reasoning: string;
-  showReasoning: Boolean;
+  showReasoning: boolean;
+  isCorrect: boolean;
 };
 
 export type FollowUp = {
@@ -16,4 +18,10 @@ export type FollowUp = {
   highQuestion?: string;
   highAnswer?: string;
   feedback?: string;
+}
+
+export enum ChatMode {
+  Understand = "Understand",
+  Code = "Code",
+  CodeReview = "Code Review"
 }

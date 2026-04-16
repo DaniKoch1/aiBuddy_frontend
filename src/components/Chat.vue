@@ -4,7 +4,6 @@
             <Greeting :greeting="greeting" :icon="greetingIcon"/> 
             <FollowUpDialogue :followUp="currentFollowUp" v-model:showDialog="showFollowUpDialog" @updateFollowUp="submitFollowUpAnswer"/>
             <AboutDialogue v-model:showDialog="showAboutDialog" />
-            <CustomRouter v-if="codeReviewsEnabled" :url="routerUrl" :icon="routerIcon" :text="routerText"/>
             <v-btn variant="outlined" color="indigo" @click="showAboutDialog = true">About</v-btn>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
@@ -23,9 +22,6 @@
                         v-if="item.followUp && item.followUp.lowAnswer"
                         :text="item.followUp.lowAnswer" 
                         :formatAsQuestion="true" >
-                        <!-- <template v-if="!item.followUp.lowAnswer" #customisation>
-                            <EditButton @showDialog="showDialog = $event" />
-                        </template> -->
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.lowQuestion && !item.followUp.lowAnswer"
@@ -34,7 +30,7 @@
                         <v-col>
                             <div class="mb-2 d-flex float-right">
                                 <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
-                                    Answer
+                                    Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
@@ -48,9 +44,6 @@
                         v-if="item.followUp && item.followUp.highAnswer"
                         :text="item.followUp.highAnswer" 
                         :formatAsQuestion="true" >
-                        <!-- <template v-if="!item.followUp.highAnswer" #customisation>
-                            <EditButton @showDialog="showDialog = $event" />
-                        </template> -->
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.highQuestion && !item.followUp.highAnswer"
@@ -59,7 +52,7 @@
                         <v-col>
                             <div class="mb-2 d-flex float-right">
                                 <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
-                                    Answer
+                                    Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
@@ -70,27 +63,23 @@
                         :formatAsQuestion="false" 
                     />
                     <AnswersRows 
-                        v-if="item.followUp && item.followUp.feedback"
+                        v-if="item.followUp && item.followUp.feedback && item.responses.length > 0"
                         :responses="item.responses"
-                        @toggleShowReasoning="toggleShowReasoning"
+                        :mode="item.mode"
+                        @toggleShowReasoning="callToggleShowReasoning"
                     />
-                    <!-- <OneRow 
-                        v-else-if="item.responses"
-                        text="Answer these 2 questions to reveal my response." 
-                        :formatAsQuestion="false"
-                    /> -->
                 </div>
             </div>
         </div>
         <div :class="chatHistory?.length ? 'pt-4' : 'my-auto'">
             <QuestionInput
                 v-model="question"
-                v-model:switchValue="generateCode"
+                v-model:activeMode="activeMode"
                 :loading="isThinking"
+                :disabled="!answerSelected"
                 :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
                 @send-question="sendMessage"
                 label="Ask away"
-                switchLabel="Generate Code"
                 :color="color"
             />
         </div>
@@ -99,36 +88,27 @@
 
 <script setup lang="ts">
 import Greeting from './Greeting.vue'
-import { ref, watch, nextTick, onMounted, computed, type ComputedRef } from 'vue'
-import { type Conversation, type FollowUp } from "../model/model"
-import CustomRouter from './CustomRouter.vue';
+import { ref, watch, nextTick, computed, type ComputedRef, onMounted } from 'vue'
+import { ChatMode, type Conversation, type FollowUp } from "../model/model"
 import QuestionInput from './QuestionInput.vue';
 import AnswersRows from './AnswersRows.vue';
 import OneRow from './OneRow.vue';
 import FollowUpDialogue from './FollowUpDialogue.vue';
 import AboutDialogue from './AboutDialogue.vue';
+import { addChatToHistory, addFollowUp, getChatContext, getChatHistory, getCurrentFollowUp, toggleShowReasoning } from '@/model/chatManager';
+import { codeAnswersStore } from '@/store/store';
 
 let question = ref("");
-let generateCode = ref(false);
+let activeMode = ref(ChatMode.Understand);
 let showFollowUpDialog = ref(false);
 let showAboutDialog = ref(false);
-const chatHistory = ref<[Conversation]>();
+const answerSelected = ref(true);
 const scrollArea = ref<HTMLElement | null>(null);
+const store = codeAnswersStore();
 
-const codeReviewsEnabled = false;
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
-const routerIcon = "fa-solid fa-ranking-star";
-const routerUrl : string = "/codereviews";
-const routerText : string = "Reviews";
 const color : string = "#6b7ad5";
-
-const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
-    if (chatHistory.value && chatHistory.value.length > 0)
-        return chatHistory.value[chatHistory.value.length-1]?.followUp ?? {};
-
-    return {};
-});
 
 const isThinking: ComputedRef<boolean> = computed(() => {
      if (chatHistory.value && chatHistory.value.length > 0) {
@@ -141,6 +121,13 @@ const isThinking: ComputedRef<boolean> = computed(() => {
     return false;
 });
 
+const chatHistory: ComputedRef<Conversation[]> = computed(() => {
+    return getChatHistory();
+})
+
+const currentFollowUp: ComputedRef<FollowUp> = computed(() => {
+    return getCurrentFollowUp();
+});
 
 watch(() => chatHistory.value?.length, async () => {
   await nextTick()
@@ -148,95 +135,109 @@ watch(() => chatHistory.value?.length, async () => {
   if (scrollArea.value) {
     scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
   }
-}, { deep: true })
+}, { deep: true });
 
-onMounted(async () => {
-    const response = await fetch("/chatHistory", {
-        method: "GET",
-        headers: {
-        "Content-Type": "application/json"
-        },
-    })
-    if (response.status === 200)
-    {
-        const message = await response.json();
-        console.log(message);
-        chatHistory.value = message.chatHistory;
-    }
-})
+watch(() => store.answerSelected, (newVal) => {
+    answerSelected.value = newVal;
+});
+
+onMounted(() => {
+    showAboutDialog.value = true;
+});
 
 async function sendMessage() {
     console.log("You asked:", question.value);
     if (!question.value) return;
 
-    const qResponse = await fetch("/ask", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify(question.value)
-    })
+    const qInput: Conversation = {mode: activeMode.value, question: question.value, responses: []};
+    addChatToHistory(qInput);
 
-    if (qResponse.status === 200)
-    {
-        const message = await qResponse.json();
-        chatHistory.value = message.chatHistory;
+    submitFollowUpAnswer({});
 
-        submitFollowUpAnswer({});
+    let aResponse;
+    switch (activeMode.value) {
+        case ChatMode.Understand:
+            aResponse = await fetch("http://localhost:5000/askUnderstand", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({chatContext: getChatContext()})
+            });
+            break;
+        case ChatMode.Code:
+            aResponse = await fetch("http://localhost:5000/askCode", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({chatContext: getChatContext()})
+            });
+            break;
+        case ChatMode.CodeReview:
+            aResponse = await fetch("http://localhost:5000/requestReview", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({code: question.value})
+            });
+            break;
+    }
 
-        const aResponse = await fetch("/respond", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify({generateCode: generateCode.value})
-        })
-
-        if (aResponse.status === 200) {
-            const message = await aResponse.json();
-            console.log(message);
-            chatHistory.value = message.chatHistory;
-        } else {
-            alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
-        }
+    if (aResponse.status === 200) {
+        const message = await aResponse.json();
+        const currentConv : Conversation = getChatHistory().pop()!;
+        currentConv!.responses = message.responses;
+        addChatToHistory(currentConv);
+        if (currentConv.mode == ChatMode.Code)
+            store.setAnswerSelected(false);
     } else {
-        alert('The backend reported an error. Error code: ' + qResponse.status + ' ' + qResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
+        alert('The LLM reported an error. Error code: ' + aResponse.status + ' ' + aResponse.statusText + '. Please contact dkoch24@student.aau.dk and report the error.');
     }
     
     question.value = '';
 }
 
 async function submitFollowUpAnswer(followUp: FollowUp) {
-    const response = await fetch("/converseSocratically", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify({followUp: followUp})
-    })
+    let response;
+    const currentConversation: Conversation = getChatHistory()[getChatHistory().length-1]!;
+
+    switch (currentConversation.mode) {
+        case ChatMode.CodeReview:
+            response = await fetch("http://localhost:5000/converseCodeReview", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({followUp: followUp, code: currentConversation.question})
+            });
+            break;
+        default:
+            response = await fetch("http://localhost:5000/converseSocratically", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({followUp: followUp, chatContext: getChatContext()})
+            });
+            break;
+    }
 
     if (response.status === 200)
     {
         const message = await response.json();
-        chatHistory.value = message.chatHistory;
-        console.log(chatHistory.value);
+        const newFollowUp = message.followUp;
+        addFollowUp(newFollowUp);
+
+        if (!getChatHistory()![getChatHistory()!.length -1]?.followUp!.highAnswer) {
+            showFollowUpDialog.value = true;
+        }
     }
 }
 
-async function toggleShowReasoning(reasoning: string) {
-    const response = await fetch("/toggleShowChatReasoning", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-        },
-        body: JSON.stringify({reasoning})
-    })
-
-    if (response.status === 200)
-    {
-        const message = await response.json();
-        chatHistory.value = message.chatHistory;
-    }
+async function callToggleShowReasoning(reasoning: string) {
+    toggleShowReasoning(reasoning);
 }
 
 </script>

@@ -15,17 +15,20 @@
             ></v-btn>
         </v-card-title>
         <v-card-text>
-            This prototype aims to help you to learn coding by answering your questions, while engaging you in critical evaluation of them. <br/>
-            It does so by:
+            This prototype helps you to learn coding by answering your questions, while engaging you in critical evaluation. <br/>
+            <b>Recommended flow:</b> ask about a concept in <i>Understand mode</i> -> ask for an implementation of it in <i>Code mode</i> -> 
+            use the code in your project and ask for a review of a function or a small class in <i>Code Review mode.</i>
+            <br/><br/>
+            Main features:
             <ul>
-                <li>Thinking process - it allows you to understand how the AI reached its answer. Make sure to read it if you are curious about the background of the answer or 
-                    suspect a mistake in it.</li>
-                <li>Follow up questions - they help you to think independently about the answer by asking you guiding questions. 
-                    This is crucial for your engagement with the topic.</li>
-                <li>Multiple code responses - they help you to familiarize yourself with different code and to evaluate it.
-                    The code has varying quality, so be sure to either choose the correct one or to correct the one you chose!</li>
-                <li>Code reviews – tbd.</li>
+                <li><b>Thinking process</b> allows you to understand how the AI reached its answer. Reading it can help you understand the background or check for potential mistakes.</li>
+                <li><b>Follow up questions</b> guide you to think independently about the answer, which is essential for engaging deeply with the topic.</li>
+                <li><b>Multiple code responses</b> help you to familiarize yourself with different implementations and to evaluate them.
+                    The quality varies, so be sure to either choose the correct one or to correct the one you chose!</li>
+                <li><b>Code reviews</b> help you to reflect on your code and give you feedback, highlighting both strengths and areas for improvement.</li>
             </ul>
+            <br/>
+            <i>Attention, if you refresh the page, you will lose you conversation!</i>
         </v-card-text>
     </v-card>
     </v-dialog>

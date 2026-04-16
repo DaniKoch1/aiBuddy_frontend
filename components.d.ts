@@ -14,7 +14,6 @@ declare module 'vue' {
     AboutDialogue: typeof import('./src/components/AboutDialogue.vue')['default']
     AnswersRows: typeof import('./src/components/AnswersRows.vue')['default']
     Chat: typeof import('./src/components/Chat.vue')['default']
-    CodeReviews: typeof import('./src/components/CodeReviews.vue')['default']
     ConversationItemCard: typeof import('./src/components/ConversationItemCard.vue')['default']
     CustomRouter: typeof import('./src/components/CustomRouter.vue')['default']
     EditButton: typeof import('./src/components/EditButton.vue')['default']
@@ -25,5 +24,6 @@ declare module 'vue' {
     QuestionInput: typeof import('./src/components/QuestionInput.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SelectCodeButton: typeof import('./src/components/SelectCodeButton.vue')['default']
   }
 }

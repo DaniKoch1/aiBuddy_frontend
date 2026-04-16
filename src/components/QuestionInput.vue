@@ -8,23 +8,25 @@
                 hide-details="auto"
                 max-rows="6"
                 :append-inner-icon="loading ? 'fa-solid fa-spinner fa-spin-pulse' : 'fas fa-arrow-up'"
-                :disabled="loading"
+                :disabled="loading || disabled"
                 v-model="modelValue"
                 @click:append-inner="$emit('send-question')"
                 @keypress.enter.exact.prevent="$emit('send-question')"
             ></v-textarea>
             <v-row>
                 <v-col cols="6" class="ma-0 pa-0" >
-                    <v-switch 
-                        :label=switchLabel
-                        density="compact"
-                        style="transform: scale(0.9);"
-                        class="pt-2" 
-                        hide-details="auto"
-                        :color="color"
-                        v-model="switchValue"
+                    <v-select
+                        v-model="activeMode"
+                        :items="modes"
+                        style="transform: scale(0.9); width: 200px"
+                        variant="underlined"
                     >
-                    </v-switch>
+                        <template v-slot:item="{ props, item }">
+                            <v-list-item v-bind="props" title="">
+                                <v-list-item-title>{{ item.title }}</v-list-item-title>
+                            </v-list-item>
+                        </template>
+                    </v-select>
                 </v-col>
                 <v-col cols="6">
                     <p class="text-right font-weight-light text-medium-emphasis" style="font-size: small">
@@ -36,20 +38,37 @@
 </template>
 
 <script setup lang="ts">
+import { ChatMode } from '@/model/model';
 import { computed } from 'vue';
 
 const props = defineProps<{
   modelValue: string;
-  switchValue: boolean;
+  activeMode: ChatMode;
   loading: boolean;
+  disabled: boolean;
   label: string;
-  switchLabel: string;
   color: string;
 }>();
 
+const modes : string[] = [ChatMode.Understand, ChatMode.Code, ChatMode.CodeReview];
+
+const label = computed(() => {
+    if (props.disabled) {
+        return "Select the correct code snippet to enable"
+    }
+    switch (activeMode.value) {
+        case ChatMode.Understand:
+            return "Ask away";
+        case ChatMode.Code:
+            return "Describe your implementation requirements";
+        case ChatMode.CodeReview:
+            return "Paste your code here";
+    }
+});
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
-  (e: 'update:switchValue', value: boolean): void;
+  (e: 'update:activeMode', value: ChatMode): void;
   (e: 'send-question'): void;
 }>();
 
@@ -58,9 +77,9 @@ const modelValue = computed({
   set: (value) => emit('update:modelValue', value)
 });
 
-const switchValue = computed({
-  get: () => props.switchValue,
-  set: (value) => emit('update:switchValue', value)
+const activeMode = computed({
+  get: () => props.activeMode,
+  set: (value) => emit('update:activeMode', value)
 });
 
 </script>
