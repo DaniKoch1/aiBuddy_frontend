@@ -157,7 +157,7 @@ async function sendMessage() {
     let aResponse;
     switch (activeMode.value) {
         case ChatMode.Understand:
-            aResponse = await fetch("http://localhost:5000/askUnderstand", {
+            aResponse = await fetch("/askUnderstand", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
@@ -166,7 +166,7 @@ async function sendMessage() {
             });
             break;
         case ChatMode.Code:
-            aResponse = await fetch("http://localhost:5000/askCode", {
+            aResponse = await fetch("/askCode", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
@@ -175,7 +175,7 @@ async function sendMessage() {
             });
             break;
         case ChatMode.CodeReview:
-            aResponse = await fetch("http://localhost:5000/requestReview", {
+            aResponse = await fetch("/requestReview", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
@@ -205,7 +205,7 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
 
     switch (currentConversation.mode) {
         case ChatMode.CodeReview:
-            response = await fetch("http://localhost:5000/converseCodeReview", {
+            response = await fetch("/converseCodeReview", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
@@ -214,7 +214,7 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
             });
             break;
         default:
-            response = await fetch("http://localhost:5000/converseSocratically", {
+            response = await fetch("/converseSocratically", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
