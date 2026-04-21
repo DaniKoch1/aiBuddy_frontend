@@ -3,6 +3,8 @@
             <v-textarea
                 :label="label"
                 variant="outlined"
+                :color="accentColor"
+                :base-color="accentColor"
                 auto-grow
                 rows="1"
                 hide-details="auto"
@@ -20,6 +22,8 @@
                         :items="modes"
                         style="transform: scale(0.9); width: 200px"
                         variant="underlined"
+                        :color="accentColor"
+                        :base-color="accentColor"
                     >
                         <template v-slot:item="{ props, item }">
                             <v-list-item v-bind="props" title="">
@@ -63,6 +67,17 @@ const label = computed(() => {
             return "Describe your implementation requirements";
         case ChatMode.CodeReview:
             return "Paste your code here";
+    }
+});
+
+const accentColor = computed(() => {
+    switch (activeMode.value) {
+        case ChatMode.Understand:
+            return '#6BAED5';
+        case ChatMode.Code:
+            return '#6B7AD5';
+        case ChatMode.CodeReview:
+            return '#926BD5';
     }
 });
 

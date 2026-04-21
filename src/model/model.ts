@@ -21,7 +21,7 @@ export type FollowUp = {
 }
 
 export enum ChatMode {
-  Understand = "Understand",
-  Code = "Code",
-  CodeReview = "Code Review"
+  Understand = "Explain",
+  Code = "Generate Code",
+  CodeReview = "Review Code"
 }
