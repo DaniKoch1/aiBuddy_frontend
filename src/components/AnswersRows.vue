@@ -30,10 +30,10 @@
                     </v-card-actions>
 
                     <v-expand-transition>
-                    <div v-show="r.showReasoning">
-                        <v-divider />
-                        <FormattedOutput :text="r.reasoning" />
-                    </div>
+                        <div v-show="r.showReasoning">
+                            <v-divider />
+                            <FormattedOutput :text="r.reasoning" />
+                        </div>
                     </v-expand-transition>
                 </template>
             </OneRow>

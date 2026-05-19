@@ -44,44 +44,47 @@
 </template>
 
 <script setup lang="ts">
-    import type { FollowUp } from '@/model/model';
+import type { FollowUp } from '@/model/model';
 import { computed, ref } from 'vue';
-    const props = defineProps<{ followUp: FollowUp, showDialog: boolean }>();
+    
+const props = defineProps<{ followUp: FollowUp, showDialog: boolean }>();
 
-    const newLowAnswer = ref('');
-    const newHighAnswer = ref('');
+const newLowAnswer = ref('');
+const newHighAnswer = ref('');
 
-    const answer = computed({
-        get() {
-            return props.followUp.highQuestion ? newHighAnswer.value : newLowAnswer.value
-        },
-        set(value) {
-            if (props.followUp.highQuestion) {
-                newHighAnswer.value = value
-            } else {
-                newLowAnswer.value = value
-            }
-        }
-    })
-
-    const emit = defineEmits<{
-    (e: 'update:showDialog', value: boolean): void;
-    (e: 'updateFollowUp', value: FollowUp): void;
-    }>();
-
-    const showDialog = computed({
-    get: () => props.showDialog,
-    set: (value) => emit('update:showDialog', value)
-    });
-
-    function sendNewAnswer() {
-        let newFollowUp: FollowUp = props.followUp;
-        newFollowUp.lowAnswer = newLowAnswer.value;
-        newFollowUp.highAnswer = newHighAnswer.value;
-        emit('updateFollowUp', newFollowUp);
-        if (newLowAnswer.value && newHighAnswer.value) {
-            newLowAnswer.value = '';
-            newHighAnswer.value = '';
+const answer = computed({
+    get() {
+        return props.followUp.highQuestion ? newHighAnswer.value : newLowAnswer.value
+    },
+    set(value) {
+        if (props.followUp.highQuestion) {
+            newHighAnswer.value = value
+        } else {
+            newLowAnswer.value = value
         }
     }
+})
+
+const emit = defineEmits<{
+(e: 'update:showDialog', value: boolean): void;
+(e: 'updateFollowUp', value: FollowUp): void;
+}>();
+
+const showDialog = computed({
+get: () => props.showDialog,
+set: (value) => emit('update:showDialog', value)
+});
+
+function sendNewAnswer() {
+    let newFollowUp: FollowUp = props.followUp;
+    newFollowUp.lowAnswer = newLowAnswer.value;
+    newFollowUp.highAnswer = newHighAnswer.value;
+
+    emit('updateFollowUp', newFollowUp);
+    
+    if (newLowAnswer.value && newHighAnswer.value) {
+        newLowAnswer.value = '';
+        newHighAnswer.value = '';
+    }
+}
 </script>

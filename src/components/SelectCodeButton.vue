@@ -19,26 +19,24 @@ import type { AIResponse } from '@/model/model';
 import { codeAnswersStore } from '@/store/store';
 import { ref } from 'vue';
 
-    const props = defineProps<{
-        response: AIResponse;
-    }>();
+const props = defineProps<{
+    response: AIResponse;
+}>();
+const icon = ref("");
+const toolTipText = ref("Set as Correct");
+const color = ref("");
+const store = codeAnswersStore();
 
-    const icon = ref("");
-    const toolTipText = ref("Set as Correct");
-    const color = ref("");
-    const store = codeAnswersStore();
-
-    function validate() {
-        if (props.response.isCorrect) {
-            icon.value = "fa-solid fa-check";
-            toolTipText.value = "You're right, this is the correct response!";
-            color.value = "green";
-            store.setAnswerSelected(true);
-
-        } else {
-            icon.value = "fa-solid fa-xmark";
-            toolTipText.value = "This is not correct. Try again.";
-            color.value = "red";
-        }
-    };
+function validate() {
+    if (props.response.isCorrect) {
+        icon.value = "fa-solid fa-check";
+        toolTipText.value = "You're right, this is the correct response!";
+        color.value = "green";
+        store.setAnswerSelected(true);
+    } else {
+        icon.value = "fa-solid fa-xmark";
+        toolTipText.value = "This is not correct. Try again.";
+        color.value = "red";
+    }
+};
 </script>

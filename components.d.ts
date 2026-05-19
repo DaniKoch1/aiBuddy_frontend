@@ -16,7 +16,6 @@ declare module 'vue' {
     Chat: typeof import('./src/components/Chat.vue')['default']
     ConversationItemCard: typeof import('./src/components/ConversationItemCard.vue')['default']
     CustomRouter: typeof import('./src/components/CustomRouter.vue')['default']
-    EditButton: typeof import('./src/components/EditButton.vue')['default']
     FollowUpDialogue: typeof import('./src/components/FollowUpDialogue.vue')['default']
     FormattedOutput: typeof import('./src/components/FormattedOutput.vue')['default']
     Greeting: typeof import('./src/components/Greeting.vue')['default']

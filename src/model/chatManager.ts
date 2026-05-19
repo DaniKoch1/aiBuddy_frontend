@@ -23,27 +23,36 @@ export function getCurrentFollowUp() : FollowUp {
 }
 
 export function addFollowUp(followUp: FollowUp) : void {
-    const currentConv : Conversation = getChatHistory().pop()!;
-    if (currentConv)
-        currentConv.followUp = followUp;
-    
-    addChatToHistory(currentConv);
+    if (getChatHistory().length > 0) {
+        const currentConv : Conversation = getChatHistory().pop()!;
+        if (currentConv)
+            currentConv.followUp = followUp;
+        
+        addChatToHistory(currentConv);
+    }
 }
 
 export function getChatContext() {
-    let context = '\n<Chat history>\n';
-
+    console.log('getChatContext');
     if (state.chatHistory.length <= contextLength) {
-        for (let h of state.chatHistory) {
-            context += appendChatContext(h);
-        }
+        console.log('short');
+        return getContext(state.chatHistory);
     }
     else {
-        let i = (state.chatHistory.length - contextLength)
-        for (i; i < state.chatHistory.length; i++) {
-            context += appendChatContext(state.chatHistory[i]!);
-        }
+        console.log('long');
+        let i = (state.chatHistory.length - contextLength);
+        return getContext(state.chatHistory.slice(i));
     }
+}
+
+function getContext(relevantHistory : Conversation[]) : string {
+    console.log('getContext, history length: ', relevantHistory.length);
+    let context = '\n<Chat history>\n';
+
+    for (let h of relevantHistory) {
+        context += appendChatContext(h);
+    }
+
     context += '</Chat history>\n';
 
     return context;
@@ -63,11 +72,11 @@ function appendChatContext(item : Conversation) {
 }
 
 export function toggleShowReasoning(reasoning: string) {
-    for (let h of state.chatHistory) {
+    outer: for (let h of state.chatHistory) {
         for (let r of h.responses) {
             if (r.reasoning === reasoning) {
                 r.showReasoning = !r.showReasoning;
-                break;
+                break outer;
             }
         }
     }
