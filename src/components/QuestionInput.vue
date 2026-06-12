@@ -7,8 +7,8 @@
                 :base-color="accentColor"
                 auto-grow
                 rows="1"
-                hide-details="auto"
                 max-rows="6"
+                hide-details="auto"
                 :append-inner-icon="loading ? 'fa-solid fa-spinner fa-spin-pulse' : 'fas fa-arrow-up'"
                 :disabled="loading || disabled"
                 v-model="modelValue"
@@ -50,7 +50,6 @@ const props = defineProps<{
   activeMode: ChatMode;
   loading: boolean;
   disabled: boolean;
-  label: string;
 }>();
 
 const modes : string[] = [ChatMode.Understand, ChatMode.Code, ChatMode.CodeReview];

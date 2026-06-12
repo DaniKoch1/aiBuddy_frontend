@@ -16,9 +16,15 @@
         </v-card-title>
         <v-card-text>
             <ul>
-                <li v-if="followUp.lowQuestion"> {{ followUp.lowQuestion }} </li>
-                <li v-if="followUp.lowAnswer && followUp.highQuestion"> {{ followUp.lowAnswer }} </li>
-                <li v-if="followUp.lowAnswer && followUp.highQuestion"> {{ followUp.highQuestion }} </li>
+                <li v-if="followUp.lowQuestion" :style="followUp.highQuestion ? { opacity: 0.35 } : {}">
+                    {{ followUp.lowQuestion }}
+                </li>
+                <li v-if="followUp.lowAnswer && followUp.highQuestion" :style="{ opacity: 0.35 }">
+                    {{ followUp.lowAnswer }}
+                </li>
+                <li v-if="followUp.lowAnswer && followUp.highQuestion">
+                    {{ followUp.highQuestion }}
+                </li>
             </ul>
             <v-textarea
                 label="Answer to reveal my response"

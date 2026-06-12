@@ -89,7 +89,6 @@
                 :disabled="!answerSelected"
                 :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
                 @send-question="sendMessage"
-                label="Ask away"
             />
         </div>
     </v-container>
@@ -154,7 +153,6 @@ onMounted(() => {
 });
 
 async function sendMessage() {
-    console.log("You asked:", question.value);
     if (!question.value) return;
 
     const qInput: Conversation = {mode: activeMode.value, question: question.value, responses: []};
