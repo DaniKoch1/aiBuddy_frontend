@@ -51,7 +51,6 @@ const props = defineProps<{
   loading: boolean;
   disabled: boolean;
   label: string;
-  color: string;
 }>();
 
 const modes : string[] = [ChatMode.Understand, ChatMode.Code, ChatMode.CodeReview];
@@ -72,12 +71,9 @@ const label = computed(() => {
 
 const accentColor = computed(() => {
     switch (activeMode.value) {
-        case ChatMode.Understand:
-            return '#6BAED5';
-        case ChatMode.Code:
-            return '#6B7AD5';
-        case ChatMode.CodeReview:
-            return '#926BD5';
+        case ChatMode.Understand:  return 'understand';
+        case ChatMode.Code:        return 'generate-code';
+        case ChatMode.CodeReview:  return 'code-review';
     }
 });
 

@@ -4,24 +4,29 @@
             <Greeting :greeting="greeting" :icon="greetingIcon"/> 
             <FollowUpDialogue :followUp="currentFollowUp" v-model:showDialog="showFollowUpDialog" @updateFollowUp="submitFollowUpAnswer"/>
             <AboutDialogue v-model:showDialog="showAboutDialog" />
-            <v-btn variant="outlined" color="indigo" @click="showAboutDialog = true">About</v-btn>
+            <v-btn variant="outlined" @click="showAboutDialog = true">About</v-btn>
         </div>
         <div ref="scrollArea" :class="chatHistory?.length ? 'flex-grow-1 overflow-y-auto' : ''">
             <div class="content mx-auto">
                 <div v-for="item in chatHistory" :key="item.question">
-                    <OneRow 
-                        :text="item.question" 
+                    <OneRow
+                        :text="item.question"
                         :formatAsQuestion="true"
+                        :mode="item.mode"
                     />
-                    <OneRow 
+                    <OneRow
                         v-if="item.followUp && item.followUp.lowQuestion"
-                        :text="item.followUp.lowQuestion" 
-                        :formatAsQuestion="false" 
+                        :text="item.followUp.lowQuestion"
+                        :formatAsQuestion="false"
+                        :mode="item.mode"
+                        :isFollowUp="true"
                     />
-                    <OneRow 
+                    <OneRow
                         v-if="item.followUp && item.followUp.lowAnswer"
-                        :text="item.followUp.lowAnswer" 
-                        :formatAsQuestion="true" >
+                        :text="item.followUp.lowAnswer"
+                        :formatAsQuestion="true"
+                        :mode="item.mode"
+                        :isFollowUp="true">
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.lowQuestion && !item.followUp.lowAnswer"
@@ -29,21 +34,25 @@
                         no-gutters >
                         <v-col>
                             <div class="mb-2 d-flex float-right">
-                                <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
+                                <v-btn @click="showFollowUpDialog = true" :color="modeColor(item.mode)" variant="tonal" class="follow-up-btn">
                                     Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
                     </v-row>
-                    <OneRow 
+                    <OneRow
                         v-if="item.followUp && item.followUp.highQuestion"
-                        :text="item.followUp.highQuestion" 
-                        :formatAsQuestion="false" 
+                        :text="item.followUp.highQuestion"
+                        :formatAsQuestion="false"
+                        :mode="item.mode"
+                        :isFollowUp="true"
                     />
-                    <OneRow 
+                    <OneRow
                         v-if="item.followUp && item.followUp.highAnswer"
-                        :text="item.followUp.highAnswer" 
-                        :formatAsQuestion="true" >
+                        :text="item.followUp.highAnswer"
+                        :formatAsQuestion="true"
+                        :mode="item.mode"
+                        :isFollowUp="true">
                     </OneRow>
                     <v-row 
                         v-if="item.followUp && item.followUp.highQuestion && !item.followUp.highAnswer"
@@ -51,22 +60,23 @@
                         no-gutters >
                         <v-col>
                             <div class="mb-2 d-flex float-right">
-                                <v-btn @click="showFollowUpDialog = true" color="indigo" variant="tonal">
+                                <v-btn @click="showFollowUpDialog = true" :color="modeColor(item.mode)" variant="tonal" class="follow-up-btn">
                                     Click to answer
                                 </v-btn>
                             </div>
                         </v-col>
                     </v-row>
-                    <OneRow 
+                    <OneRow
                         v-if="item.followUp && item.followUp.feedback"
-                        :text="item.followUp.feedback" 
-                        :formatAsQuestion="false" 
+                        :text="item.followUp.feedback"
+                        :formatAsQuestion="false"
+                        :mode="item.mode"
+                        :isFollowUp="true"
                     />
-                    <AnswersRows 
+                    <AnswersRows
                         v-if="item.followUp && item.followUp.feedback && item.responses.length > 0"
                         :responses="item.responses"
                         :mode="item.mode"
-                        @toggleShowReasoning="callToggleShowReasoning"
                     />
                 </div>
             </div>
@@ -80,7 +90,6 @@
                 :centered="chatHistory?.length === undefined || chatHistory?.length < 1"
                 @send-question="sendMessage"
                 label="Ask away"
-                :color="color"
             />
         </div>
     </v-container>
@@ -95,7 +104,7 @@ import AnswersRows from './AnswersRows.vue';
 import OneRow from './OneRow.vue';
 import FollowUpDialogue from './FollowUpDialogue.vue';
 import AboutDialogue from './AboutDialogue.vue';
-import { addChatToHistory, addFollowUp, getChatContext, getChatHistory, getCurrentFollowUp, toggleShowReasoning } from '@/model/chatManager';
+import { addChatToHistory, addFollowUp, getChatContext, getChatHistory, getCurrentFollowUp } from '@/model/chatManager';
 import { codeAnswersStore } from '@/store/store';
 
 let question = ref("");
@@ -108,7 +117,6 @@ const store = codeAnswersStore();
 
 const greeting : string = "Hi, I'm your artificial coding buddy!";
 const greetingIcon : string = "fa-solid fa-user-astronaut";
-const color : string = "#6b7ad5";
 
 const isThinking: ComputedRef<boolean> = computed(() => {
      if (chatHistory.value && chatHistory.value.length > 0) {
@@ -236,8 +244,13 @@ async function submitFollowUpAnswer(followUp: FollowUp) {
     }
 }
 
-async function callToggleShowReasoning(reasoning: string) {
-    toggleShowReasoning(reasoning);
+
+function modeColor(mode: ChatMode): string {
+    switch (mode) {
+        case ChatMode.Understand:  return 'understand'
+        case ChatMode.Code:        return 'generate-code'
+        case ChatMode.CodeReview:  return 'code-review'
+    }
 }
 
 </script>

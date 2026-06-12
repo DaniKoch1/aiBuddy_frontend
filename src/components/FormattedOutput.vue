@@ -3,11 +3,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
+import { useTheme } from 'vuetify'
 import MarkdownIt from "markdown-it"
 import DOMPurify from "dompurify"
 import hljs from 'highlight.js';
-import 'highlight.js/styles/github-dark.css';
+import hljsLight from 'highlight.js/styles/github.css?url'
+import hljsDark  from 'highlight.js/styles/github-dark.css?url'
+
+const theme = useTheme()
+
+watchEffect(() => {
+  const isDark = theme.global.current.value.dark
+  const id = 'hljs-theme'
+  let link = document.getElementById(id) as HTMLLinkElement | null
+  if (!link) {
+    link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    document.head.appendChild(link)
+  }
+  link.href = isDark ? hljsDark : hljsLight
+})
 
 const md = new MarkdownIt({
   highlight(code, lang) {

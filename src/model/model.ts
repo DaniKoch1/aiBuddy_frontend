@@ -8,7 +8,6 @@ export type Conversation = {
 export type AIResponse = {
   answer: string;
   reasoning: string;
-  showReasoning: boolean;
   isCorrect?: boolean;
 };
 

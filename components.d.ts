@@ -18,6 +18,7 @@ declare module 'vue' {
     CustomRouter: typeof import('./src/components/CustomRouter.vue')['default']
     FollowUpDialogue: typeof import('./src/components/FollowUpDialogue.vue')['default']
     FormattedOutput: typeof import('./src/components/FormattedOutput.vue')['default']
+    GenericDialogue: typeof import('./src/components/GenericDialogue.vue')['default']
     Greeting: typeof import('./src/components/Greeting.vue')['default']
     OneRow: typeof import('./src/components/OneRow.vue')['default']
     QuestionInput: typeof import('./src/components/QuestionInput.vue')['default']

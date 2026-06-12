@@ -71,13 +71,3 @@ function appendChatContext(item : Conversation) {
     return histItem;
 }
 
-export function toggleShowReasoning(reasoning: string) {
-    outer: for (let h of state.chatHistory) {
-        for (let r of h.responses) {
-            if (r.reasoning === reasoning) {
-                r.showReasoning = !r.showReasoning;
-                break outer;
-            }
-        }
-    }
-}
