@@ -36,7 +36,7 @@
             </OneRow>
 
             <GenericDialogue
-                v-model:showDialog="reasoningOpen[i]"
+                v-model:showDialog="reasoningOpen[i]!"
                 title="Thinking process"
                 width="800"
             >
